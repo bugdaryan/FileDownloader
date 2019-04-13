@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FileDownloader.WPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
+        Title="MainWindow" Height="450" Width="594.538">
+    <Grid>       
+        <ListBox x:Name="DownloadsListBox" HorizontalAlignment="Left" Height="399" Margin="10,10,0,0" VerticalAlignment="Top" Width="274"/>
+        <Button x:Name="AddNewDownloadButton" Content="New Download" HorizontalAlignment="Left" Margin="400,24,0,0" VerticalAlignment="Top" Width="119" Click="AddNewDownloadButton_Click"/>
     </Grid>
 </Window>
