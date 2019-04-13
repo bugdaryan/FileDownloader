@@ -10,14 +10,16 @@ namespace FileDownloader.WPF
     public partial class MainWindow : Window
     {
         Dictionary<Button, DownloadListBoxItem> downloadControls;
-        Dictionary<Button, Button> buttons;
+        Dictionary<Button, Button> cancelAddButtons;
+        Dictionary<Button, Button> removeAddButtons; 
 
         public MainWindow()
         {
             InitializeComponent();
             downloadControls = new Dictionary<Button, DownloadListBoxItem>();
 
-            buttons = new Dictionary<Button, Button>();
+             cancelAddButtons = new Dictionary<Button, Button>();
+            removeAddButtons = new Dictionary<Button, Button>();
         }
 
         private void AddNewDownloadButton_Click(object sender, RoutedEventArgs e)
@@ -25,17 +27,32 @@ namespace FileDownloader.WPF
             DownloadListBoxItem item = new DownloadListBoxItem((int)DownloadsListBox.Width);
             item.CancelButton.Click += CancelButton_Click;
             item.DownloadButton.Click += Download_ClickAsync;
+            item.RemoveButton.Click += RemoveButton_Click;
 
             DownloadsListBox.Items.Add(item.DownloadBorder);
 
             downloadControls.Add(item.DownloadButton, item);
-            buttons.Add(item.CancelButton, item.DownloadButton);
+            cancelAddButtons.Add(item.CancelButton, item.DownloadButton);
+            removeAddButtons.Add(item.RemoveButton, item.DownloadButton);
+        }
+
+        private void RemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            var removeButton = (Button)sender;
+            var downloadButton = removeAddButtons[removeButton];
+            var item = downloadControls[downloadButton];
+
+            removeAddButtons.Remove(removeButton);
+            cancelAddButtons.Remove(item.CancelButton);
+            downloadControls.Remove(downloadButton);
+
+            DownloadsListBox.Items.Remove(item.DownloadBorder);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             var cancelButton = (Button)sender;
-            var downloadButton = buttons[cancelButton];
+            var downloadButton = cancelAddButtons[cancelButton];
             downloadControls[downloadButton].TokenSource.Cancel();
             downloadControls[downloadButton].TokenSource.Dispose();
         }
