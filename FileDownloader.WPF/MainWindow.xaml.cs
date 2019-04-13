@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,18 +20,14 @@ namespace FileDownloader.WPF
     public partial class MainWindow : Window
     {
         Dictionary<Button, (TextBox, ProgressBar, Button)> downloadControls;
-        int index = 0;
-        CancellationToken cancelToken;
-        CancellationTokenSource cts;
+        Dictionary<Button, CancellationTokenSource> tokens;
 
         public MainWindow()
         {
             InitializeComponent();
             downloadControls = new Dictionary<Button, (TextBox, ProgressBar, Button)>();
 
-            cts = new CancellationTokenSource();
-            cancelToken = new CancellationToken();
-            cancelToken = cts.Token;
+            tokens = new Dictionary<Button, CancellationTokenSource>();
         }
 
         private async Task DownloadAsync(Button button)
@@ -38,12 +35,9 @@ namespace FileDownloader.WPF
             if (downloadControls.ContainsKey(button))
             {
                 var textBox = downloadControls[button].Item1;
-
                 var progressBar = downloadControls[button].Item2;
-
                 var cancelButton = downloadControls[button].Item3;
 
-                int ind = textBox.Name[textBox.Name.Length - 1] - '0';
                 progressBar.Value = 0;
 
                 using (var dlg = new SaveFileDialog())
@@ -60,9 +54,9 @@ namespace FileDownloader.WPF
                                 {
                                     progressBar.Value = args.ProgressPercentage;
                                 };
-                                cts = new CancellationTokenSource();
-
-                                cts.Token.Register(() =>
+                                var token = new CancellationTokenSource();
+                                tokens[cancelButton] = token;
+                                token.Token.Register(() =>
                                 {
                                     cancelButton.Visibility = Visibility.Collapsed;
                                     progressBar.Visibility = Visibility.Collapsed;
@@ -70,6 +64,26 @@ namespace FileDownloader.WPF
                                     textBox.Visibility = Visibility.Visible;
 
                                     client.CancelAsync();
+                                    client.Dispose();
+
+                                    ////////////////////////
+                                    //GC.Collect();
+                                    //GC.WaitForPendingFinalizers();
+                                    ///////////////////////
+
+                                    var file = new FileInfo(filePath);
+                                    file.Attributes = file.Attributes & ~FileAttributes.ReadOnly;
+
+                                    try
+                                    {
+                                        file.Delete();
+                                    }
+                                    catch (IOException ex)
+                                    {
+                                        MessageBox.Show(ex.Message);
+                                    }
+                           
+                                    //File.Delete(filePath);
                                 });
 
                                 cancelButton.Visibility = Visibility.Visible;
@@ -80,8 +94,6 @@ namespace FileDownloader.WPF
                                 try
                                 {
                                     await client.DownloadFileTaskAsync(textBox.Text, filePath);
-
-                                    MessageBox.Show($"Download {ind} completed!");
                                 }
                                 catch (WebException exception)
                                 {
@@ -98,7 +110,7 @@ namespace FileDownloader.WPF
                                     button.Visibility = Visibility.Visible;
                                     textBox.Visibility = Visibility.Visible;
 
-                                    cts.Dispose();
+                                    token.Dispose();
                                 }
                             }
                         }
@@ -122,8 +134,7 @@ namespace FileDownloader.WPF
             var newDownload = new StackPanel
             {
                 Width = DownloadsListBox.Width * .95,
-                Height = 70,
-                Name = $"DownloadStackPanel_{index}"
+                Height = 90,
             };
             border.Child = newDownload;
 
@@ -131,21 +142,28 @@ namespace FileDownloader.WPF
             {
                 Width = DownloadsListBox.Width * 0.9,
                 Height = 30,
-                Margin = new Thickness(5, 0, 0, 0),
-                Name = $"DownloadTextbox_{index}"
+                Margin = new Thickness(5, 10, 0, 0),
             };
             newDownload.Children.Add(textBox);
 
+            var progressBar = new System.Windows.Controls.ProgressBar
+            {
+                Width = textBox.Width * .9,
+                Height = 30,
+                Margin = new Thickness(10)
+            };
+            progressBar.Visibility = Visibility.Collapsed;
+            newDownload.Children.Add(progressBar);
+
             var cancelButton = new Button
             {
-                Margin = new Thickness(10, 10, 10, 0),
+                Margin = new Thickness(10, 10, 10, 10),
                 Width = 100,
                 Height = 30,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
                 Content = "Cancel",
                 Background = Brushes.DodgerBlue,
                 Foreground = Brushes.White,
-                Name = $"CancelButton_{index}",
                 Visibility = Visibility.Collapsed
             };
             cancelButton.Click += CancelButton_Click;
@@ -160,30 +178,19 @@ namespace FileDownloader.WPF
                 Content = "Download",
                 Background = Brushes.DodgerBlue,
                 Foreground = Brushes.White,
-                Name = $"DownloadButton_{index}"
             };
             button.Click += Download_ClickAsync;
             newDownload.Children.Add(button);
 
-            var progressBar = new System.Windows.Controls.ProgressBar
-            {
-                Name = $"DownloadProgressBar_{index}",
-                Width = 200,
-                Height = 30,
-                Margin = new Thickness(10)
-            };
-            progressBar.Visibility = Visibility.Collapsed;
-            newDownload.Children.Add(progressBar);
-
             DownloadsListBox.Items.Add(border);
             downloadControls.Add(button, (textBox, progressBar, cancelButton));
-            index++;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            cts.Cancel();
-            cts.Dispose();
+            var cancelButton = (Button)sender;
+            tokens[cancelButton].Cancel();
+            tokens[cancelButton].Dispose();
         }
 
         private async void Download_ClickAsync(object sender, RoutedEventArgs e)
