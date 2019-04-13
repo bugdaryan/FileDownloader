@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -48,12 +50,13 @@ namespace FileDownloader.WPF
                         var filePath = dlg.FileName;
                         if (textBox.Text != string.Empty && Uri.IsWellFormedUriString(textBox.Text, UriKind.RelativeOrAbsolute))
                         {
-                            using (var client = new WebClient())
+                            byte[] buffer;
+                            using (var client = new HttpClient())
                             {
-                                client.DownloadProgressChanged += (send, args) =>
-                                {
-                                    progressBar.Value = args.ProgressPercentage;
-                                };
+                                //client.DownloadProgressChanged += (send, args) =>
+                                //{
+                                //    progressBar.Value = args.ProgressPercentage;
+                                //};
                                 var token = new CancellationTokenSource();
                                 tokens[cancelButton] = token;
                                 token.Token.Register(() =>
@@ -63,7 +66,7 @@ namespace FileDownloader.WPF
                                     button.Visibility = Visibility.Visible;
                                     textBox.Visibility = Visibility.Visible;
 
-                                    client.CancelAsync();
+                                    //client.CancelAsync();
                                     client.Dispose();
 
                                     ////////////////////////
@@ -93,7 +96,16 @@ namespace FileDownloader.WPF
 
                                 try
                                 {
-                                    await client.DownloadFileTaskAsync(textBox.Text, filePath);
+                                    var stream = await client.GetStreamAsync(textBox.Text);
+                                    buffer = new byte[stream.Length];
+                                    await stream.ReadAsync(buffer, 0, (int)stream.Length);
+
+                                    using (var s = new StreamWriter(filePath, false, Encoding.UTF8, buffer.Length))
+                                    {
+                                        s.Write(buffer);
+                                    }
+
+                                    stream.Dispose();
                                 }
                                 catch (WebException exception)
                                 {
