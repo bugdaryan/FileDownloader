@@ -95,5 +95,14 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileDownloader.Services\FileDownloader.Services.csproj">
+      <Project>{1CBBDA72-1622-493B-B358-94225DB30E0D}</Project>
+      <Name>FileDownloader.Services</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
