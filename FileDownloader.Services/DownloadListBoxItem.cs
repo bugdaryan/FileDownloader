@@ -18,6 +18,7 @@ namespace FileDownloader.Services
     {
         public Button DownloadButton { get; set; }
         public Button CancelButton { get; set; }
+        public Button RemoveButton { get; set; }
         public TextBox DownloadTextBox { get; set; }
         public ProgressBar DownloadProgressBar { get; set; }
         public CancellationTokenSource TokenSource { get; set; }
@@ -49,18 +50,29 @@ namespace FileDownloader.Services
             {
                 Width = DownloadTextBox.Width * .9,
                 Height = 30,
-                Margin = new Thickness(10)
+                Margin = new Thickness(10),
+                Visibility = Visibility.Collapsed
             };
-            DownloadProgressBar.Visibility = Visibility.Collapsed;
 
-            CancelButton = new Button
+            RemoveButton = new Button
             {
                 Margin = new Thickness(10, 10, 10, 10),
                 Width = 100,
                 Height = 30,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                Content = "Remove",
+                Background = Brushes.Red,
+                Foreground = Brushes.White,
+            };
+
+            CancelButton = new Button
+            {
+                Margin = new Thickness(10, 0, 10, 10),
+                Width = 100,
+                Height = 30,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
                 Content = "Cancel",
-                Background = Brushes.DodgerBlue,
+                Background = Brushes.Gray,
                 Foreground = Brushes.White,
                 Visibility = Visibility.Collapsed
             };
@@ -76,10 +88,14 @@ namespace FileDownloader.Services
                 Foreground = Brushes.White,
             };
 
+            var grid = new Grid();
+            grid.Children.Add(DownloadButton);
+            grid.Children.Add(RemoveButton);
+
             DownloadBorder.Child = DownloadPanel;
 
             DownloadPanel.Children.Add(DownloadTextBox);
-            DownloadPanel.Children.Add(DownloadButton);
+            DownloadPanel.Children.Add(grid);
             DownloadPanel.Children.Add(DownloadProgressBar);
             DownloadPanel.Children.Add(CancelButton);
         }
@@ -90,6 +106,7 @@ namespace FileDownloader.Services
             DownloadProgressBar.Visibility = Visibility.Collapsed;
             DownloadButton.Visibility = Visibility.Visible;
             DownloadTextBox.Visibility = Visibility.Visible;
+            RemoveButton.Visibility = Visibility.Visible;
         }
 
         private void HideDownloadStuff()
@@ -98,6 +115,7 @@ namespace FileDownloader.Services
             DownloadProgressBar.Visibility = Visibility.Visible;
             DownloadButton.Visibility = Visibility.Collapsed;
             DownloadTextBox.Visibility = Visibility.Collapsed;
+            RemoveButton.Visibility = Visibility.Collapsed;
         }
 
         public async Task DownloadAsync()
@@ -115,10 +133,6 @@ namespace FileDownloader.Services
                     {
                         using (var client = new HttpClientWithProgress(DownloadTextBox.Text, filePath))
                         {
-                            //client.DownloadProgressChanged += (send, args) =>
-                            //{
-                            //    progressBar.Value = args.ProgressPercentage;
-                            //};
                             TokenSource = new CancellationTokenSource();
 
                             TokenSource.Token.Register(() =>
