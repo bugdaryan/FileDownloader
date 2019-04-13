@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -114,7 +113,7 @@ namespace FileDownloader.Services
                     if (DownloadTextBox.Text != string.Empty &&
                         Uri.IsWellFormedUriString(DownloadTextBox.Text, UriKind.RelativeOrAbsolute))
                     {
-                        using (var client = new HttpClient())
+                        using (var client = new HttpClientWithProgress(DownloadTextBox.Text, filePath))
                         {
                             //client.DownloadProgressChanged += (send, args) =>
                             //{
@@ -133,14 +132,14 @@ namespace FileDownloader.Services
 
                             try
                             {
-                                HttpResponseMessage response = await client.GetAsync(DownloadTextBox.Text);
-                                response.EnsureSuccessStatusCode();
-
-                                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                                client.ProgressChanged += (totalFileSize, totalBytesDownloaded, progressPercentage) =>
                                 {
-                                    await response.Content.CopyToAsync(fileStream);
-                                }
-
+                                    if (progressPercentage.HasValue)
+                                    {
+                                        DownloadProgressBar.Value = progressPercentage.Value;
+                                    }
+                                };
+                                await client.StartDownloadAsync();
                             }
                             catch (HttpRequestException exception)
                             {
