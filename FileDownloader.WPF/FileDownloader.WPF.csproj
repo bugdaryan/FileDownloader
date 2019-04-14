@@ -109,7 +109,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="favicon.ico" />
-    <Content Include="Images\favicon.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\favicon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
