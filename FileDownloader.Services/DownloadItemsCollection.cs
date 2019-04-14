@@ -16,24 +16,23 @@ namespace FileDownloader.Services
             cancelToItems = new Dictionary<Button, DownloadListBoxItem>();
             removeToItems = new Dictionary<Button, DownloadListBoxItem>();
         }
-        public void Remove(Button downloadButton, Button cancelButton, Button removeButton)
+        public void Remove(Button removeButton)
         {
-            CheckIfContains(downloadToItems, downloadButton); 
-            CheckIfContains(cancelToItems,cancelButton); 
             CheckIfContains(removeToItems, removeButton);
+            var item = GetByRemoveButton(removeButton);
 
-            downloadToItems.Remove(downloadButton);
-            cancelToItems.Remove(cancelButton);
+            downloadToItems.Remove(item.DownloadButton);
+            cancelToItems.Remove(item.CancelButton);
             removeToItems.Remove(removeButton);
         }
 
 
-        public void Add(DownloadListBoxItem item, Button downloadButton, Button cancelButton, Button removeButton)
+        public void Add(DownloadListBoxItem item)
         {
-            CheckIfNotContains(item, downloadButton, cancelButton, removeButton);
-            downloadToItems.Add(downloadButton, item);
-            cancelToItems.Add(cancelButton, item);
-            removeToItems.Add(removeButton, item);
+            CheckIfNotContains(item, item.DownloadButton, item.CancelButton, item.RemoveButton);
+            downloadToItems.Add(item.DownloadButton, item);
+            cancelToItems.Add(item.CancelButton, item);
+            removeToItems.Add(item.RemoveButton, item);
         }
         public DownloadListBoxItem GetByDownloadButton(Button button)
         {
