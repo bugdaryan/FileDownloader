@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FileDownloader.Services
@@ -14,17 +15,19 @@ namespace FileDownloader.Services
 
         private HttpClient _httpClient;
 
+        private CancellationToken _cancellationToken;
+
         public event ProgressChangedHandler ProgressChanged;
 
-        public void CancelPendingRequests()
-        {
-            _httpClient.CancelPendingRequests();
-        }
-
-        public HttpClientWithProgress(string downloadUrl, string destinationFilePath)
+        public HttpClientWithProgress(string downloadUrl, string destinationFilePath, CancellationToken cancellationToken)
         {
             _downloadUrl = downloadUrl;
             _destinationFilePath = destinationFilePath;
+            _cancellationToken = cancellationToken;
+        }
+        public void CancelPendingRequests()
+        {
+            _httpClient.CancelPendingRequests();
         }
 
         public async Task StartDownloadAsync()
@@ -61,7 +64,7 @@ namespace FileDownloader.Services
                 do
                 {
                     var bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length);
-                    if (bytesRead == 0)
+                    if (bytesRead == 0 || _cancellationToken.IsCancellationRequested)
                     {
                         isMoreToRead = false;
                         TriggerProgressChanged(totalDownloadSize, totalBytesRead);

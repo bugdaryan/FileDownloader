@@ -138,7 +138,7 @@ namespace FileDownloader.Services
         {
             DownloadProgressBar.Value = 0;
             ProgressLabel.Content = "0%";
-            using (var dlg = new System.Windows.Forms.SaveFileDialog())
+            using (var dlg = new SaveFileDialog())
             {
                 var dialogResult = dlg.ShowDialog();
                 if (dialogResult == DialogResult.OK)
@@ -147,10 +147,10 @@ namespace FileDownloader.Services
                     if (DownloadTextBox.Text != string.Empty &&
                         Uri.IsWellFormedUriString(DownloadTextBox.Text, UriKind.RelativeOrAbsolute))
                     {
-                        using (var client = new HttpClientWithProgress(DownloadTextBox.Text, filePath))
-                        {
-                            TokenSource = new CancellationTokenSource();
 
+                        TokenSource = new CancellationTokenSource();
+                        using (var client = new HttpClientWithProgress(DownloadTextBox.Text, filePath, TokenSource.Token))
+                        {
                             TokenSource.Token.Register(() =>
                             {
                                 client.CancelPendingRequests();
