@@ -33,7 +33,6 @@ namespace FileDownloader.WPF
             var removeButton = (Button)sender;
             DownloadsListBox.Items.Remove(items.GetByRemoveButton(removeButton).DownloadBorder);
             items.Remove(removeButton);
-
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

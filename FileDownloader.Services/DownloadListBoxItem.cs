@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -144,6 +145,7 @@ namespace FileDownloader.Services
                 if (dialogResult == DialogResult.OK)
                 {
                     var filePath = dlg.FileName;
+                    var fileName = filePath.Substring(filePath.LastIndexOf(@"\")+1);
                     if (DownloadTextBox.Text != string.Empty &&
                         Uri.IsWellFormedUriString(DownloadTextBox.Text, UriKind.RelativeOrAbsolute))
                     {
@@ -171,6 +173,24 @@ namespace FileDownloader.Services
                                     }
                                 };
                                 await client.StartDownloadAsync();
+                                if(!TokenSource.IsCancellationRequested)
+                                {
+                                    MessageBox.Show($"Downloading {fileName} completed!"
+                                        ,"Success",MessageBoxButton.OK,MessageBoxImage.Information);
+                                }
+                                else
+                                {
+                                    var res = MessageBox.Show($"Downloading {fileName} canceled!\nDo you want to remove downloaded files?"
+                                        ,"Canceled", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                                    if(res == MessageBoxResult.Yes)
+                                    {
+                                        FileInfo file = new FileInfo(filePath);
+                                        if(file.Exists)
+                                        {
+                                            file.Delete();
+                                        }
+                                    }
+                                }
                             }
                             catch (HttpRequestException exception)
                             {
