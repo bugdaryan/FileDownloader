@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -175,8 +176,12 @@ namespace FileDownloader.Services
                                 await client.StartDownloadAsync();
                                 if(!TokenSource.IsCancellationRequested)
                                 {
-                                    MessageBox.Show($"Downloading {fileName} completed!"
-                                        ,"Success",MessageBoxButton.OK,MessageBoxImage.Information);
+                                    var res = MessageBox.Show($"Downloading {fileName} completed!\nDo you want to open it?"
+                                        ,"Success",MessageBoxButton.YesNo, MessageBoxImage.Information, MessageBoxResult.No);
+                                    if(res == MessageBoxResult.Yes)
+                                    {
+                                        Process.Start(filePath);
+                                    }
                                 }
                                 else
                                 {
